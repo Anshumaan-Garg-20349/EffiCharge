@@ -1,0 +1,77 @@
+#include<LiquidCrystal.h>
+#include<EEPROM.h>
+LiquidCrystal licrdi (8,7,6,5,4,3); 
+#define consoleA 10 //clk pin of rotary encoder 
+#define consoleB 11 //dt pin of rotary encoder 
+#define button 2   //sw pin of rotary encoder 
+#define led 13     //status led
+#define relay 12   //in1 of relay
+
+int count = 1; 
+int current_state;
+int previous_state;  
+int hours =0;
+int mins=0;
+int sec=0;
+int ho=0;
+int mi=0;
+int se=0;
+int led_Toggle;
+int prv_State = HIGH;
+unsigned int prv_Press;
+volatile int buton_Flag;
+int button_De_bounce = 20;
+
+
+
+void setup() 
+{ 
+  licrdi.begin(16,2);
+  pinMode (consoleA,INPUT);
+  pinMode (consoleB,INPUT);
+  pinMode (button,INPUT_PULLUP);
+  pinMode (licrdi, OUTPUT);
+  pinMode (relay, OUTPUT);
+  digitalWrite(relay, HIGH);
+  attachInterrupt(digitalPinToInterrupt(2), button_ISR, CHANGE);
+  Serial.begin (9600);
+  previous_state = digitalRead(consoleA);   
+  
+   
+    if(EEPROM.read(0)!=0 || EEPROM.read(1)!=0 || EEPROM.read(2)!=0)
+    {
+      licrdi.setCursor(0,0);
+      licrdi.print("Load Preset ?");
+      licrdi.print(" ");
+      licrdi.setCursor(0,1);
+      licrdi.print("      <NO>      ");
+      int tmp=5;
+      while(tmp>0 && ledToggle==0)
+      {
+        licrdi.setCursor(14,0);
+        licrdi.print(tmp);
+        tmp--;
+        delay(1000);
+      }
+      if(tmp==0 && led_Toggle==0)
+      {
+       hours=EEPROM.read(0);
+       mins=EEPROM.read(1);
+       sec=EEPROM.read(2);
+       timer();
+      }
+      else 
+      {
+       EEPROM.write(0,0);
+       EEPROM.write(1,0);
+       EEPROM.write(2,0);
+       led_Toggle=0;
+      }
+    }
+    licrdi.clear();    
+    licrdi.setCursor(0,0);
+    licrdi.print(" HH  MM  SS  OK ");
+    licrdi.setCursor(0,1);
+    licrdi.print(" 0   0   0      ");
+   
+} 
